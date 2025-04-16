@@ -13,9 +13,9 @@ bool is_miller_index(const std::string& str) {
     std::string indices = "hkl" ; 
     for (char c : str) {
         if (indices.find(c) != std::string::npos) {
-	  return true;
+            return true;
         }
-        if (c == '-' != std::string::npos) {
+        if (c == '-') {
             continue;
         }
     }
@@ -39,13 +39,31 @@ std::string strip_dash(const char* arg) {
     return cleaned;
 }
 
+std::string strip_dash_return_sense(const char* arg) {
+    std::string newindex = arg ;   // arg should be equal to       new_index[ "default_indices[i]" ]
+    int multiplier = 1;
+    std::string newindex_stripped;
+    for (char c : newindex) {
+        if (c == '-') {
+            multiplier = multiplier * -1; //multiply the column by -1
+            continue;
+        } 
+        else {
+            multiplier = multiplier * 1;
+            newindex_stripped = std::string(1,c);
+        }
+    }
+    return (newindex_stripped, multiplier); //return these two and store them to be used
+}
+
 int main(int argc, char* argv[]) {
     // Check if filename was provided
-    if (argc < 5) {
+    if (argc != 5)  {
         std::cerr << "Usage: " << argv[0] << " <filename.HKL> h k l \n or k h l (to flip h and k)\n or -h l k (to flip k and l, while inverting h)" << std::endl;
         return 1;
     }
-
+    std::string default_indices = "hkl" ; 
+    std::string value;
     std::string filename = argv[1];
     std::string marker = "!END_OF_HEADER";
     std::string ender = "!END_OF_DATA";
@@ -63,15 +81,16 @@ int main(int argc, char* argv[]) {
     std::ofstream outputFile(output_filename);  
     
     // understand the requested modification
-    if ((strip_dash(argv[2]) == argv[3]) || (strip_dash(argv[2]) == argv[4]) || (strip_dash(argv[4]) == argv[3]))
-      {
+    if ((strip_dash(argv[2]) == strip_dash(argv[3])) || (strip_dash(argv[2]) == strip_dash(argv[4])) || (strip_dash(argv[4]) == strip_dash(argv[3])))
+    {
         std::cout << "Error: some indices entered are the same" << std::endl;
-        if ((!is_miller_index(argv[2])) || (!is_miller_index(argv[3])) || (!is_miller_index(argv[4]))) {
-          std::cerr << "Error: miller indices information, it should only be h k l, and a minus sign (if inverting needed)" << std::endl;
-          std::cerr << "Usage: " << argv[0] << " <filename.HKL> h k l \n or k h l (to flip h and k)\n or -h l k (to flip k and l, while inverting h)" << std::endl;
-          return 1;
-        }
-      }
+        return 1;  
+    }
+    else if ((!is_miller_index(argv[2])) || (!is_miller_index(argv[3])) || (!is_miller_index(argv[4]))) {
+        std::cerr << "Error: miller indices information, it should only be h k l, and a minus sign (if inverting is needed)" << std::endl;
+        std::cerr << "Usage: " << argv[0] << " <filename.HKL> h k l \n or k h l (to flip h and k)\n or -h l k (to flip k and l, while inverting h)" << std::endl;
+        return 1;
+    }
     else {
       std::unordered_map<std::string, std::string> new_index;     
       std::array<char, 3> hkl = {'h', 'k', 'l'};
@@ -88,7 +107,7 @@ int main(int argc, char* argv[]) {
                     inverting = "and inverting " + str;
                   }
                   new_index[std::string(1, hkl[i])]=argv[i+2];
-                  std::cout << "Flipping "<<hkl[i]<<" with "<<hkl[j-2]<<" "<<inverting << std::endl;              
+                //   std::cout << "Flipping "<<hkl[i]<<" with "<<hkl[j-2]<<" "<<inverting << std::endl;              
                 }
             }
         }
@@ -137,6 +156,46 @@ int main(int argc, char* argv[]) {
         if (!markerFound) {
             size_t lineLength = current - lineStart;
             std::string line(lineStart, lineLength);
+            if (line.find("!UNIT_CELL_CONSTANTS=") != std::string::npos) {
+                std::istringstream rowStream(line);
+                std::vector<std::string> row;
+                while (std::getline(rowStream, value, '\t')) {
+                    row.push_back(value);
+                }
+                for (int i=0; i< default_indices.length(); i++) {
+                    std::string newindex = new_index[ "default_indices[i]" ] ;
+                    int multiplier = 1;
+                    std::string newindex_stripped;
+                    for (char c : newindex) {
+                        if (c == '-') {
+                            multiplier = multiplier * -1; //multiply the column by -1
+                            continue;
+                        } 
+                        else {
+                            multiplier = multiplier * 1;
+                            newindex_stripped = std::string(1,c);
+                        }
+                    }
+                    if (std::string(1, default_indices[i]) != newindex_stripped) {
+                        std::swap(row[i+1], row[ 1 + default_indices.find(newindex_stripped) ] );
+                    }
+                }
+                
+                std::vector<std::string> new_row;
+                new_row.push_back(row[0]);
+                // use strip_dash_return_sense to get the multiplier and get the index without minus sign
+                new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[0]" ]) ]);
+                new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[1]" ]) ]);
+                new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[2]" ]) ]);
+                new_row.insert(new_row.end(), row.begin() + 2, row.end());
+
+
+
+
+                
+                // std::swap(row[], row[]);    
+            }
+            
             outputFile << line << "\n";
             if (line.find(marker) != std::string::npos) {
                 markerFound = true;
@@ -146,10 +205,10 @@ int main(int argc, char* argv[]) {
         } 
         else {
             // Count lines after marker
-            std::string value;
             std::vector<std::vector<std::string>> table;
             size_t lineLength = current - lineStart;
             std::string line(lineStart, lineLength);
+
             std::istringstream rowStream(line);
             std::vector<std::string> row;
             while (std::getline(rowStream, value, '\t')) {
