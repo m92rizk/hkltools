@@ -39,7 +39,7 @@ std::string strip_dash(const char* arg) {
     return cleaned;
 }
 
-std::string strip_dash_return_sense(const char* arg) {
+auto strip_dash_return_sense(const char* arg) {
     std::string newindex = arg ;   // arg should be equal to       new_index[ "default_indices[i]" ]
     int multiplier = 1;
     std::string newindex_stripped;
@@ -159,39 +159,45 @@ int main(int argc, char* argv[]) {
             if (line.find("!UNIT_CELL_CONSTANTS=") != std::string::npos) {
                 std::istringstream rowStream(line);
                 std::vector<std::string> row;
+                std::string newindex;
+                int multiplier = 1;
                 while (std::getline(rowStream, value, '\t')) {
                     row.push_back(value);
                 }
-                for (int i=0; i< default_indices.length(); i++) {
-                    std::string newindex = new_index[ "default_indices[i]" ] ;
-                    int multiplier = 1;
-                    std::string newindex_stripped;
-                    for (char c : newindex) {
-                        if (c == '-') {
-                            multiplier = multiplier * -1; //multiply the column by -1
-                            continue;
-                        } 
-                        else {
-                            multiplier = multiplier * 1;
-                            newindex_stripped = std::string(1,c);
-                        }
-                    }
-                    if (std::string(1, default_indices[i]) != newindex_stripped) {
-                        std::swap(row[i+1], row[ 1 + default_indices.find(newindex_stripped) ] );
-                    }
-                }
-                
+//                 for (int i=0; i< default_indices.length(); i++) {
+//                     std::string newindex = new_index[ "default_indices[i]" ] ;
+//                     int multiplier = 1;
+//                     std::string newindex_stripped;
+//                     for (char c : newindex) {
+//                         if (c == '-') {
+//                             multiplier = multiplier * -1; //multiply the column by -1
+//                             continue;
+//                         }
+//                         else {
+//                             multiplier = multiplier * 1;
+//                             newindex_stripped = std::string(1,c);
+//                         }
+//                     }
+//                     if (std::string(1, default_indices[i]) != newindex_stripped) {
+//                         std::swap(row[i+1], row[ 1 + default_indices.find(newindex_stripped) ] );
+//                     }
+//                 }
                 std::vector<std::string> new_row;
                 new_row.push_back(row[0]);
                 // use strip_dash_return_sense to get the multiplier and get the index without minus sign
-                new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[0]" ]) ]);
-                new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[1]" ]) ]);
-                new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[2]" ]) ]);
+                for (int i=0;i<3;i++) {
+                    const char *cstr = new_index[ "default_indices[i]"].c_str();
+                    tie(newindex , multiplier) = strip_dash_return_sense(cstr);
+                    new_row.push_back(row[ 1 + default_indices.find(newindex)] * multiplier);
+                }
+                // new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[0]" ]) ]);
+                // new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[1]" ]) ]);
+                // new_row.push_back(row[ 1 + default_indices.find(new_index[ "default_indices[2]" ]) ]);
                 new_row.insert(new_row.end(), row.begin() + 2, row.end());
 
 
 
-
+                line = new_row;
                 
                 // std::swap(row[], row[]);    
             }
