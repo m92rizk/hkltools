@@ -12,6 +12,28 @@
 #include <iomanip>
 
 
+
+void push_back_padded(std::vector<std::string>& strings, const std::string& item, int width, int space_after) {
+    std::ostringstream val_stream;
+    val_stream << std::setw (width) << item ;
+    std::string val_str = val_stream.str();
+    strings.push_back( val_str );
+    for (int i=0; i<space_after; i++) {
+        strings.push_back(" ");
+    }
+}
+
+std::string vector_to_string(const std::vector<std::string>& row) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < row.size(); ++i) {
+        oss << row[i];
+        // if (i != row.size() - 1) {
+        //     oss << '\t';  // Add tab between items
+        // }
+    }
+    return oss.str();
+}
+
 // sorting
 bool is_data_line(const std::string& line) {
     return !line.empty() && line[0] != '!';
@@ -34,11 +56,26 @@ bool is_numeric(const std::string& s) {
 
 void write_table(std::ofstream& file, const std::vector<std::vector<std::string>>& table) {
     for (const auto& row : table) {
-        file << "\t";
-        for (size_t i = 0; i < row.size(); ++i) {
-            file << row[i];
-            if (i != row.size() - 1) file << "\t";
-        }
+        std::vector<std::string> new_row;
+        new_row.push_back(" ");
+        push_back_padded(new_row, row[0],5,1);
+        push_back_padded(new_row, row[1],5,1);
+        push_back_padded(new_row, row[2],5,1);
+        push_back_padded(new_row, row[3],10,1);
+        push_back_padded(new_row, row[4],10,2);
+        push_back_padded(new_row, row[5],6,2);
+        push_back_padded(new_row, row[6],6,3);
+        push_back_padded(new_row, row[7],6,3);
+        push_back_padded(new_row, row[8],7,1);
+        push_back_padded(new_row, row[9],3,1);
+        push_back_padded(new_row, row[10],3,2);
+        push_back_padded(new_row, row[11],6,0);
+        // for (size_t i = 0; i < row.size(); ++i) {
+        //     file << row[i];
+        //     if (i != row.size() - 1) file << "\t";
+        // }
+        std::string new_row_str = vector_to_string(new_row);
+        file << new_row_str;
         file << "\n";
     }
 }
@@ -114,20 +151,9 @@ bool sort_and_overwrite_table_file(const std::string& filename) {
 //end of sorting
 
 
-void pushback_padded()
 
 
-std::string vector_to_tab_delimited_string(const std::vector<std::string>& row) {
-    std::ostringstream oss;
-//     oss << '\t';  // Add the initial tab
-    for (size_t i = 0; i < row.size(); ++i) {
-        oss << row[i];
-        if (i != row.size() - 1) {
-            oss << '\t';  // Add tab between items
-        }
-    }
-    return oss.str();
-}
+
 
 // testing input orientations if only contains indices and minus sign
 bool is_miller_index(const std::string& str) {
@@ -290,6 +316,9 @@ int main(int argc, char* argv[]) {
 //             size_t lineLength = current - lineStart;
 //             std::string line(lineStart, lineLength);
             if (line.find("!UNIT_CELL_CONSTANTS=") != std::string::npos) {
+                //!UNIT_CELL_CONSTANTS=    59.887    58.753    62.683 112.221  89.770 121.124
+                //000000000000000000000   aaaaaaa   bbbbbbb   ccccccc alphaal betabet gammaga  
+                //       0 : 21        ---  1:7  ---   2:7 ---  3:7  -  4:7  -  5:7  -  6:7
                 std::istringstream rowStream(line);
                 std::vector<std::string> row;
                 std::string newindex;
@@ -300,6 +329,7 @@ int main(int argc, char* argv[]) {
                 std::vector<std::string> new_row;
                 new_row.push_back(row[0]);
                 for (int i=0;i<3;i++) {
+                    new_row.push_back("   ");
                     std::string key = std::string(1, default_indices[i]);
                     const char *cstr = new_index[ key ].c_str();
                     auto index_info = strip_dash_return_sense(cstr);
@@ -310,7 +340,7 @@ int main(int argc, char* argv[]) {
                         float val = std::stof(row[1 + itt->second]);
 //                         val = val * multiplier;  
                         std::ostringstream val_stream;
-                        val_stream << std::fixed << std::setprecision(3) << val ;
+                        val_stream << std::fixed << std::setw(7) << std::setprecision(3) << val ;
                         std::string val_str = val_stream.str();
                         new_row.push_back( val_str );
                     } catch (const std::invalid_argument& e) {
@@ -318,8 +348,11 @@ int main(int argc, char* argv[]) {
                         new_row.push_back("0.0");  // fallback
                     }
                 }
-                new_row.insert(new_row.end(), row.begin() + 4, row.end());
-                line = vector_to_tab_delimited_string(new_row);
+                new_row.push_back(" ");
+                push_back_padded(new_row, row[4],7,1);
+                push_back_padded(new_row, row[5],7,1);
+                push_back_padded(new_row, row[6],7,0);
+                line = vector_to_string(new_row);
                 std::cout << line << std::endl;
             }
             
@@ -336,9 +369,10 @@ int main(int argc, char* argv[]) {
 //             size_t lineLength = current - lineStart;
 //             std::string line(lineStart, lineLength);
              // example for padding
+            //   0      1   2       3           4           5       6       7       8       9   10     11
             // hhhhh kkkkk lllll IOBSIOBSIO SIGMASIGMA  XDXDXD  YDYDYD   ZDZDZD   RLPRLPR PEA  CC  PSIPSI
             //     0    -2     0  8.247E+01  2.804E+01  1488.9  1697.4     62.4   0.01946 100  29  -74.94
-
+            //   5  -  5  -  5  -    10    -    10    --  6   --  6   ---  6   ---   7   - 3 -- 2--  6
             std::istringstream rowStream(line);
             std::vector<std::string> row;
             while (rowStream >> value) {
@@ -359,8 +393,7 @@ int main(int argc, char* argv[]) {
                 row.push_back(value);
             }
             std::vector<std::string> new_row;
-//             new_row.push_back(row[0]);
-
+            new_row.push_back(" "); 
             for (int i=0;i<3;i++) {
                 std::string key = std::string(1, default_indices[i]);
                 const char *cstr = new_index[ key ].c_str();
@@ -377,6 +410,7 @@ int main(int argc, char* argv[]) {
                         val_stream << std::setw (5) << val ;
                         std::string val_str = val_stream.str();
                         new_row.push_back( val_str );
+                        new_row.push_back(" ");
                     } catch (const std::invalid_argument& e) {
                         std::cerr << "Invalid input for stoi: '" << row[itt->second] << "'" << std::endl;
                         new_row.push_back("0");  // fallback
@@ -386,20 +420,28 @@ int main(int argc, char* argv[]) {
                     new_row.push_back("0");
                 }
             }
-            new_row.push_back(" ");
+            push_back_padded(new_row, row[3],10,1);
+            push_back_padded(new_row, row[4],10,2);
+            push_back_padded(new_row, row[5],6,2);
+            push_back_padded(new_row, row[6],6,3);
+            push_back_padded(new_row, row[7],6,3);
+            push_back_padded(new_row, row[8],7,1);
+            push_back_padded(new_row, row[9],3,1);
+            push_back_padded(new_row, row[10],3,2);
+            push_back_padded(new_row, row[11],6,0);
 
-            new_row.insert(new_row.end(), row.begin() + 3, row.end());
+            // new_row.insert(new_row.end(), row.begin() + 3, row.end());
             line = "";
-            for (size_t i = 0; i < new_row.size(); ++i) {
-                line += new_row[i];
-                if (i != new_row.size() - 1) line += '\t'; // tab delimiter
-            }
+            // for (size_t i = 0; i < new_row.size(); ++i) {
+            //     line += new_row[i];
+            //     if (i != new_row.size() - 1) line += '\t'; // tab delimiter
+            // }
             // Spinner animation
             std::cout << "\r" << "Loading ... " << "\r" << spinner[i % 2] << std::flush;
             i++;
 //             std::cout << line << std::endl;
-            std::string tabbed_line = vector_to_tab_delimited_string(new_row);
-            outputFile << "\t" << line << "\n";
+            std::string line_str = vector_to_string(new_row);
+            outputFile << line_str << "\n";
 
         }
         
