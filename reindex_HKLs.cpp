@@ -12,8 +12,16 @@
 #include <iomanip>
 #include <numeric>  // for std::accumulate
 
+
+
 using namespace std;
 using namespace std::chrono;
+
+
+string script_header=   "\n#######################################################\n"
+                        "Source code: https://github.com/m92rizk/reindex_hkl.git\n"
+                        "Version: 2.0.0\n"
+                        "#######################################################\n";
 
 string get_os_endline() {
     #ifdef _WIN32
@@ -78,14 +86,22 @@ bool is_data_line(const std::string& line) {
 }
 
 bool is_numeric(const std::string& s) {
-    if (s.empty()) return false;
-    size_t start = (s[0] == '-') ? 1 : 0;
+    // Trim leading and trailing spaces
+    size_t first = s.find_first_not_of(" \t");
+    size_t last = s.find_last_not_of(" \t");
+    std::string trimmed_s = (first == std::string::npos || last == std::string::npos) 
+                            ? "" 
+                            : s.substr(first, (last - first + 1));
+
+    
+    if (trimmed_s.empty()) return false;
+    size_t start = (trimmed_s[0] == '-') ? 1 : 0;
     bool has_dot = false;
-    for (size_t i = start; i < s.size(); ++i) {
-        if (s[i] == '.') {
+    for (size_t i = start; i < trimmed_s.size(); ++i) {
+        if (trimmed_s[i] == '.') {
             if (has_dot) return false;
             has_dot = true;
-        } else if (!isdigit(s[i])) {
+        } else if (!isdigit(trimmed_s[i])) {
             return false;
         }
     }
@@ -129,7 +145,7 @@ void write_table(ofstream& file, const vector<vector<string>>& table) {
     size_t total_rows = table.size();
     float last_progress = -1.0f;  // to force the first update
     int row_index = 0;
-    cout<<"|Exporting reindexed file|"<<endl;
+    cout<<"\n|Exporting reindexed file|"<<endl;
     auto start_time = steady_clock::now();
     int last_percent = -1;  // So it triggers on first 0%
     for (const auto& row : table) {
@@ -160,19 +176,19 @@ void write_table(ofstream& file, const vector<vector<string>>& table) {
             continue;
         }
         vector<string> new_row; // 6 6 6 11 11 8 8 9 10 4 4 8
-        new_row.push_back(" ");
-        push_back_padded(new_row, row[0],5,1);
-        push_back_padded(new_row, row[1],5,1);
-        push_back_padded(new_row, row[2],5,1);
-        push_back_padded(new_row, row[3],10,1);
-        push_back_padded(new_row, row[4],10,2);
-        push_back_padded(new_row, row[5],6,2);
-        push_back_padded(new_row, row[6],6,3);
-        push_back_padded(new_row, row[7],6,3);
-        push_back_padded(new_row, row[8],7,1);
-        push_back_padded(new_row, row[9],3,1);
-        push_back_padded(new_row, row[10],3,2);
-        push_back_padded(new_row, row[11],6,0);
+//         new_row.push_back(" ");
+        push_back_padded(new_row, row[0],6,0);
+        push_back_padded(new_row, row[1],6,0);
+        push_back_padded(new_row, row[2],6,0);
+        push_back_padded(new_row, row[3],11,0);
+        push_back_padded(new_row, row[4],11,0);
+        push_back_padded(new_row, row[5],8,0);
+        push_back_padded(new_row, row[6],8,0);
+        push_back_padded(new_row, row[7],9,0);
+        push_back_padded(new_row, row[8],10,0);
+        push_back_padded(new_row, row[9],4,0);
+        push_back_padded(new_row, row[10],4,0);
+        push_back_padded(new_row, row[11],8,0);
         string new_row_str = vector_to_string(new_row);
         file << new_row_str;
         file << endline;
@@ -418,7 +434,7 @@ bool sort_and_overwrite_table_file(const string& filename) {
             float progress = static_cast<float>(current_pos) / fileSize;
             int current_percent = static_cast<int>(progress * 100);
             if (current_percent != last_percent) {
-                print_progress_bar(progress+0.01, start_time);
+                print_progress_bar(progress, start_time);
                 last_percent = current_percent;
             }
         }
@@ -428,14 +444,15 @@ bool sort_and_overwrite_table_file(const string& filename) {
 
     string status;
     stable_sort(table.begin(), table.end(), [&status](const vector<string>& a, const vector<string>& b) {
-        try {
-            if (is_numeric(a[0]) && is_numeric(b[0])) {
-                status = "success";
-                return abs(stoi(a[0])) < abs(stoi(b[0]));
-            }
-        } catch (const std::exception& e) {
-            cerr << "Sort error: " << e.what() << "\n";
+//         try {
+//         cout<<"sorting these: "<< a[0] << " and " << b[0] <<endl;
+        if (is_numeric(a[0]) && is_numeric(b[0])) {
+            status = "SUCCESS";
+            return abs(stoi(a[0])) < abs(stoi(b[0]));
         }
+//         } catch (const std::exception& e) {
+//             cerr << "Sort error: " << e.what() << "\n";
+//         }
         status = "failed";
         return false;
     });
@@ -450,19 +467,23 @@ bool sort_and_overwrite_table_file(const string& filename) {
     write_table(outfile, table);
     for (const auto& f : footer_lines) outfile << f << endline;
     cout << "\nSorted output file: " << filename_sorted << "\n" << endl;
-//     cout << status << endl;
+    cout << status << endl;
     return true;
 }
 //end of sorting
 
 // testing input orientations if only contains indices and minus sign
 bool is_new_orientation(const string& str) {
+    int i=0;
     for (char c : str) {
         if ((c != '0') && (c != '1') && (c != '-')) {
             return false;
         }
+        else if ((c == '0') || (c == '1')) {
+            i++;
+        }
     }
-    if (str.length()==3) return true;
+    if (i==3) return true;
     else {
         cout << "\nIncorrect orientation matrices!\n"<<endl;
         return false;
@@ -707,7 +728,7 @@ bool reindex(string& filename,vector<vector<float>>& matrix) {
 !UNIT_CELL_CONSTANTS=    59.887    58.753    62.683 112.221  89.770 121.124|
 000000000000000000000   aaaaaaa   bbbbbbb   ccccccc alphaal betabet gammaga|   
        0 : 21        ---  1:7  ---   2:7 ---  3:7  -  4:7  -  5:7  -  6:7  | */
-                cout <<"Found unit cells"<<endl;
+//                 cout <<"Found unit cells"<<endl;
                 istringstream rowStream(line);
                 vector<string> row;
                 string value;
@@ -750,7 +771,7 @@ bool reindex(string& filename,vector<vector<float>>& matrix) {
                 push_back_padded(new_row, row[4],7,1);
                 push_back_padded(new_row, row[5],7,1);
                 push_back_padded(new_row, row[6],7,0);
-                new_row.push_back(endline);
+//                 new_row.push_back(endline);
                 line = vector_to_string(new_row);
                 // printLine_details(line);
                 // std::cout << fullRow << std::endl;
@@ -762,13 +783,13 @@ bool reindex(string& filename,vector<vector<float>>& matrix) {
             if (line.find(marker) != string::npos) {
                 markerFound = true;
                 // line = normalize_line_endings(line);
-                outputFile << line ;
+                outputFile << line <<endline ;
                 current++; // move to next line
                 cout<<"\n|Reindexing|"<<endl;
                 continue;
             }
             
-            outputFile << line ;
+            outputFile << line << endline ;
             // current++;
 
         } 
@@ -877,6 +898,7 @@ int main(int argc, char* argv[]) {
     // print_last_line(test);
     // return 0 ;
     // Check if filename was provided
+    cout<<script_header;
     if ((argc != 5) || (! is_new_orientation(argv[2])) || (! is_new_orientation(argv[3])) || (! is_new_orientation(argv[4]))) {
         std::cerr << "Usage: " << argv[0] << " <filename.HKL> 100 010 001 \n or 010 100 001 (to flip h and k)\n or -100 001 010 (to flip k and l, while inverting h)" << std::endl;
         return 1;
