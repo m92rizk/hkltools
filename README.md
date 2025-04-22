@@ -10,3 +10,25 @@ Usage: ./hklridx <filename.HKL> 100 010 001
 
 Download:
 - git clone https://github.com/m92rizk/reindex_hkl.git
+
+
+Dependancies:
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <algorithm>
+#include <array>
+#include <vector>
+#include <chrono>
+#include <sstream>
+#include <unordered_map>
+#include <utility>
+#include <cmath>
+#include <iomanip>
+#include <numeric>
+
+Compiling:
+- linux: g++ reindex_HKLs.cpp  -o hklridx -std=c++11
+- windows:
+- 1) need to install: winget install Microsoft.VisualStudio.2022.BuildTools --force --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.26100"
+  2) compile: cl /MD	/EHsc reindex_HKLs.cpp
