@@ -1,6 +1,6 @@
 **Usage:** 
 
-`./hklridx <filename.HKL> 100 010 001`
+`./hklridx filename.HKL 100 010 001`
 
  or `010 100 001` (to flip h and k)
  
@@ -16,19 +16,19 @@
 
 **Dependencies:**
 
-<iostream>
-<fstream>
-<string>
-<algorithm>
-<array>
-<vector>
-<chrono>
-<sstream>
-<unordered_map>
-<utility>
-<cmath>
-<iomanip>
-<numeric>
+iostream
+fstream
+string
+algorithm
+array
+vector
+chrono
+sstream
+unordered_map
+utility
+cmath
+iomanip
+numeric
 
 **Compiling:**
 - linux: `g++ reindex_HKLs.cpp  -o hklridx -std=c++11`
