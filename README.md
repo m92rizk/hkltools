@@ -5,10 +5,11 @@ Usage: ./hklridx <filename.HKL> 100 010 001
  or -100 001 010 (to flip k and l, while inverting h)
 
 
-to get version 2.0.0
 
-git clone --no-checkout https://github.com/m92rizk/reindex_hkl.git
+To get version 2.0.0
 
-cd reindex_hkl
+- git clone --no-checkout https://github.com/m92rizk/reindex_hkl.git
 
-git checkout tags/v2.0.0
+- cd reindex_hkl
+
+- git checkout tags/v2.0.0
