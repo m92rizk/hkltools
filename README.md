@@ -6,6 +6,9 @@ Usage: ./hklridx <filename.HKL> 100 010 001
 
 
 to get version 2.0.0
+
 git clone --no-checkout https://github.com/m92rizk/reindex_hkl.git
+
 cd reindex_hkl
+
 git checkout tags/v2.0.0
