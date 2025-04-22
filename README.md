@@ -16,19 +16,19 @@
 
 **Dependencies:**
 
-include iostream
-include fstream
-include string
-include algorithm
-include array
-include vector
-include chrono
-include sstream
-include unordered_map
-include utility
-include cmath
-include iomanip
-include numeric
+include iostream,
+include fstream,
+include string,
+include algorithm,
+include array,
+include vector,
+include chrono,
+include sstream,
+include unordered_map,
+include utility,
+include cmath,
+include iomanip,
+include numeric.
 
 **Compiling:**
 - linux: `g++ reindex_HKLs.cpp  -o hklridx -std=c++11`
