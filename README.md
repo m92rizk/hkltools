@@ -35,4 +35,4 @@ include numeric.
 - Windows:
 - 1) need to install: `winget install Microsoft.VisualStudio.2022.BuildTools --force --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --add Microsoft.VisualStudio.Component.Windows11SDK.26100"`
   2) Start Menu → Visual Studio → "Developer Command Prompt for Visual Studio" (not the regular cmd)
-  3) compile: `cl /MD	/EHsc reindex_HKLs.cpp`
+  3) compile: `cl /EHsc /Zi /MDd reindex_HKLs.cpp`
