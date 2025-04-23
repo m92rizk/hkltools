@@ -405,6 +405,15 @@ bool sort_and_overwrite_table_file(const string& filename) {
         if (in_table && !is_data_line(line)) {
             // cerr << "Stopped parsing table at line:\n" << line << "\n";
             footer_lines.push_back(line);
+            auto current_pos = infile.tellg();
+            if (current_pos != -1) {
+                float progress = static_cast<float>(current_pos) / fileSize;
+                int current_percent = static_cast<int>(progress * 100);
+                if (current_percent != last_percent) {
+                    print_progress_bar(progress, start_time);
+                    last_percent = current_percent;
+                }
+            }
             continue;
         }
 
@@ -714,8 +723,8 @@ bool reindex(string& filename,vector<vector<float>>& matrix) {
         if (!endingFound) {
             if (line.find(ender) != string::npos) {
                 endingFound = true;
-                outputFile << line;
-                // outputFile.close();
+                outputFile << line << endline;
+                outputFile.close();
                 // cout<<"\nreached the end of file and reindexing"<<endl;
                 break;
             }
